@@ -89,16 +89,20 @@ Projet d'évaluation du module **Ansible DevOps** : déployer une boutique e-com
 Tout en une commande (installe la collection, déploie, teste et enregistre les journaux) :
 
 ```bash
-./deploy.sh                    # vault non chiffré
-./deploy.sh --ask-vault-pass   # vault chiffré
+./deploy.sh                       # vault non chiffré, sudo sans mot de passe
+./deploy.sh -K                    # sudo demande un mot de passe (cas des machines du cours)
+./deploy.sh -K --ask-vault-pass   # + vault chiffré
 ```
+
+`-K` (`--ask-become-pass`) demande le mot de passe sudo de l'utilisateur distant au lancement,
+pour ne jamais l'écrire dans le dépôt.
 
 Ou étape par étape :
 
 ```bash
 ansible-galaxy collection install -r requirements.yml
-ansible-playbook site.yml  --ask-vault-pass
-ansible-playbook tests.yml --ask-vault-pass
+ansible-playbook site.yml  -K --ask-vault-pass
+ansible-playbook tests.yml -K --ask-vault-pass
 ```
 
 Durée indicative : 5 à 10 minutes (l'installation des données de démonstration est la plus longue).
@@ -190,6 +194,7 @@ ansible-playbook site.yml -e prestashop_install_demo_data=0 -e prestashop_langua
 
 | Symptôme | Piste |
 |----------|-------|
+| `Missing sudo password` | Relancer avec `-K` pour saisir le mot de passe sudo de `liora`. |
 | `UNREACHABLE` | Vérifier l'IP privée dans l'inventaire, le port 22 et les droits `chmod 600` de la clé. |
 | L'installateur échoue | Relancer avec `-e prestashop_hide_secrets=false` pour voir le message ; vérifier l'accès Internet du serveur web et le port 3306 vers la base. Une relance reprend l'installation depuis le début. |
 | « Cannot download language pack » | Le serveur web n'a pas accès à `i18n.prestashop-project.org`. |

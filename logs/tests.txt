@@ -1,0 +1,78 @@
+=== Tests - 2026-09-29 12:49:02 ===
+
+PLAY [Tests du serveur de base de données] *************************************
+
+TASK [Collecter l'état des services] *******************************************
+ok: [db1]
+
+TASK [Vérifier que MySQL tourne] ***********************************************
+ok: [db1] => 
+    changed: false
+    msg: OK - le service MySQL est actif
+
+TASK [Vérifier que MySQL écoute sur le port 3306] ******************************
+ok: [db1]
+
+TASK [Compter les tables de la base prestashop] ********************************
+ok: [db1]
+
+TASK [Vérifier que la base contient les tables PrestaShop] *********************
+ok: [db1] => 
+    changed: false
+    msg: OK - 276 tables dans la base prestashop
+
+PLAY [Tests du serveur web] ****************************************************
+
+TASK [Collecter l'état des services] *******************************************
+ok: [web1]
+
+TASK [Vérifier qu'Apache tourne] ***********************************************
+ok: [web1] => 
+    changed: false
+    msg: OK - le service Apache est actif
+
+TASK [Vérifier la version de PHP utilisée] *************************************
+ok: [web1]
+
+TASK [Afficher la version de PHP] **********************************************
+ok: [web1] => 
+    msg: PHP 8.1.34
+
+TASK [Tester la connexion du serveur web vers MySQL] ***************************
+ok: [web1]
+
+TASK [Vérifier que le catalogue de démonstration est présent] ******************
+ok: [web1] => 
+    changed: false
+    msg: OK - 19 produits dans le catalogue
+
+TASK [Retenir le domaine configuré dans la boutique] ***************************
+ok: [web1]
+
+TASK [Afficher le résultat de la connexion web -> MySQL] ***********************
+ok: [web1] => 
+    msg:
+    - 'OK - le serveur web lit la base : 19 produits dans ps_product'
+    - 'Domaine de la boutique : 13.60.168.34'
+
+TASK [Tester la page d'accueil de la boutique] *********************************
+ok: [web1]
+
+TASK [Vérifier le contenu de la page d'accueil] ********************************
+ok: [web1] => 
+    changed: false
+    msg: OK - la page d'accueil répond (HTTP 200)
+
+PLAY [Test depuis la machine de contrôle Ansible] ******************************
+
+TASK [Tester la boutique depuis le master (port 80)] ***************************
+ok: [web1 -> localhost]
+
+TASK [Résultat] ****************************************************************
+ok: [web1] => 
+    msg: OK - boutique accessible depuis le master via 172.31.46.197:80 (HTTP 200)
+
+PLAY RECAP *********************************************************************
+db1                        : ok=5    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+web1                       : ok=12   changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

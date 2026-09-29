@@ -1,0 +1,212 @@
+=== Déploiement - 2026-09-29 12:45:16 ===
+[WARNING]: Deprecation warnings can be disabled by setting `deprecation_warnings=False` in ansible.cfg.
+[DEPRECATION WARNING]: community.mysql.mysql_db has been deprecated. Use ansible.mysql.mysql_db instead. This feature will be removed from collection 'community.mysql' version 6.0.0.
+Origin: /home/liora/ansible-prestashop/roles/mysql/tasks/main.yml:40:3
+
+38
+39 - name: Supprimer la base de test
+40   community.mysql.mysql_db:
+     ^ column 3
+
+[DEPRECATION WARNING]: community.mysql.mysql_user has been deprecated. Use ansible.mysql.mysql_user instead. This feature will be removed from collection 'community.mysql' version 6.0.0.
+Origin: /home/liora/ansible-prestashop/roles/mysql/tasks/main.yml:46:3
+
+44
+45 - name: Supprimer les utilisateurs anonymes
+46   community.mysql.mysql_user:
+     ^ column 3
+
+[DEPRECATION WARNING]: community.mysql.mysql_db has been deprecated. Use ansible.mysql.mysql_db instead. This feature will be removed from collection 'community.mysql' version 6.0.0.
+Origin: /home/liora/ansible-prestashop/roles/mysql/tasks/main.yml:53:3
+
+51
+52 - name: Créer la base de données de la boutique
+53   community.mysql.mysql_db:
+     ^ column 3
+
+[DEPRECATION WARNING]: community.mysql.mysql_user has been deprecated. Use ansible.mysql.mysql_user instead. This feature will be removed from collection 'community.mysql' version 6.0.0.
+Origin: /home/liora/ansible-prestashop/roles/mysql/tasks/main.yml:61:3
+
+59
+60 - name: Créer l'utilisateur applicatif pour chaque serveur web
+61   community.mysql.mysql_user:
+     ^ column 3
+
+[DEPRECATION WARNING]: ansible.builtin.apt_repository has been deprecated. Use deb822_repository instead. This feature will be removed from ansible-core version 2.25.
+Origin: /home/liora/ansible-prestashop/roles/prestashop/tasks/php.yml:13:3
+
+11
+12 - name: Ajouter le dépôt PHP quand la version n'est pas fournie par la distribution
+13   ansible.builtin.apt_repository:
+     ^ column 3
+
+
+PLAY [Déployer la base de données MySQL] ***************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [db1]
+
+TASK [mysql : Installer MySQL et le connecteur Python] *************************
+changed: [db1]
+
+TASK [mysql : Démarrer et activer MySQL] ***************************************
+ok: [db1]
+
+TASK [mysql : Écouter sur toutes les interfaces] *******************************
+[WARNING]: Module remote_tmp /root/.ansible/tmp did not exist and was created with a mode of 0700, this may cause issues when running as another user. To avoid this, create the remote_tmp dir with the correct permissions manually
+changed: [db1]
+
+TASK [mysql : Définir le port d'écoute] ****************************************
+changed: [db1]
+
+TASK [mysql : Appliquer la configuration réseau maintenant] ********************
+
+RUNNING HANDLER [mysql : Redémarrer MySQL] *************************************
+changed: [db1]
+
+TASK [mysql : Attendre que MySQL écoute] ***************************************
+ok: [db1]
+
+TASK [mysql : Supprimer la base de test] ***************************************
+ok: [db1]
+
+TASK [mysql : Supprimer les utilisateurs anonymes] *****************************
+ok: [db1]
+
+TASK [mysql : Créer la base de données de la boutique] *************************
+changed: [db1]
+
+TASK [mysql : Créer l'utilisateur applicatif pour chaque serveur web] **********
+changed: [db1] => (item=(censored due to no_log))
+changed: [db1] => (item=(censored due to no_log))
+
+PLAY [Déployer la boutique PrestaShop] *****************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [web1]
+
+TASK [prestashop : Récupérer un jeton de métadonnées EC2 (IMDSv2)] *************
+skipping: [web1]
+
+TASK [prestashop : Lire l'IP publique EC2] *************************************
+skipping: [web1]
+
+TASK [prestashop : Fixer le domaine de la boutique] ****************************
+ok: [web1]
+
+TASK [prestashop : Installer les prérequis système] ****************************
+changed: [web1]
+
+TASK [prestashop : Ajouter le dépôt PHP quand la version n'est pas fournie par la distribution] ***
+[DEPRECATION WARNING]: INJECT_FACTS_AS_VARS default to `True` is deprecated, top-level facts will not be auto injected after the change. This feature will be removed from ansible-core version 2.24.
+Origin: /home/liora/ansible-prestashop/roles/prestashop/tasks/php.yml:18:7
+
+16     update_cache: true
+17   when:
+18     - ansible_distribution == "Ubuntu"
+         ^ column 7
+
+Use `ansible_facts["fact_name"]` (no `ansible_` prefix) instead.
+
+[DEPRECATION WARNING]: INJECT_FACTS_AS_VARS default to `True` is deprecated, top-level facts will not be auto injected after the change. This feature will be removed from ansible-core version 2.24.
+Origin: /home/liora/ansible-prestashop/roles/prestashop/tasks/php.yml:19:7
+
+17   when:
+18     - ansible_distribution == "Ubuntu"
+19     - ansible_distribution_version is version('22.04', '>')
+         ^ column 7
+
+Use `ansible_facts["fact_name"]` (no `ansible_` prefix) instead.
+
+changed: [web1]
+
+TASK [prestashop : Installer PHP et ses extensions] ****************************
+changed: [web1]
+
+TASK [prestashop : Régler php.ini pour PrestaShop] *****************************
+changed: [web1] => (item={'key': 'memory_limit', 'value': '512M'})
+changed: [web1] => (item={'key': 'upload_max_filesize', 'value': '32M'})
+changed: [web1] => (item={'key': 'post_max_size', 'value': '32M'})
+changed: [web1] => (item={'key': 'max_execution_time', 'value': '300'})
+ok: [web1] => (item={'key': 'allow_url_fopen', 'value': 'On'})
+
+TASK [prestashop : Installer Apache] *******************************************
+ok: [web1]
+
+TASK [prestashop : Activer les modules Apache nécessaires] *********************
+changed: [web1] => (item=rewrite)
+ok: [web1] => (item=php8.1)
+
+TASK [prestashop : Déployer le virtual host PrestaShop] ************************
+changed: [web1]
+
+TASK [prestashop : Activer le site PrestaShop] *********************************
+changed: [web1]
+
+TASK [prestashop : Désactiver le site par défaut] ******************************
+changed: [web1]
+
+TASK [prestashop : Démarrer et activer Apache] *********************************
+ok: [web1]
+
+TASK [prestashop : Créer le dossier de téléchargement] *************************
+changed: [web1]
+
+TASK [prestashop : Vérifier si l'archive est déjà présente] ********************
+ok: [web1]
+
+TASK [prestashop : Télécharger l'archive PrestaShop 8.2.3] *********************
+changed: [web1]
+
+TASK [prestashop : Extraire l'archive de distribution] *************************
+changed: [web1]
+
+TASK [prestashop : Créer la racine web] ****************************************
+changed: [web1]
+
+TASK [prestashop : Extraire PrestaShop dans la racine web] *********************
+changed: [web1]
+
+TASK [prestashop : Vérifier si la boutique est déjà installée] *****************
+ok: [web1]
+
+TASK [prestashop : Attendre que la base de données soit joignable] *************
+ok: [web1]
+
+TASK [prestashop : Lancer l'installateur PrestaShop en ligne de commande] ******
+changed: [web1]
+
+TASK [prestashop : Marquer l'installation comme terminée] **********************
+changed: [web1]
+
+TASK [prestashop : Afficher la fin du journal d'installation] ******************
+ok: [web1] => 
+    msg:
+    - -- Installation successful! --
+
+TASK [prestashop : Rendre les fichiers à www-data] *****************************
+changed: [web1]
+
+TASK [prestashop : Supprimer le dossier d'installation] ************************
+changed: [web1]
+
+TASK [prestashop : Renommer le dossier d'administration] ***********************
+changed: [web1]
+
+TASK [prestashop : Afficher les accès à la boutique] ***************************
+ok: [web1] => 
+    msg:
+    - 'Boutique : http://13.60.168.34/'
+    - 'Back-office : http://13.60.168.34/admin-liora/'
+    - 'Base de données : 172.31.40.120:3306/prestashop'
+
+RUNNING HANDLER [prestashop : Redémarrer Apache] *******************************
+changed: [web1]
+
+RUNNING HANDLER [prestashop : Recharger Apache] ********************************
+changed: [web1]
+
+PLAY RECAP *********************************************************************
+db1                        : ok=11   changed=6    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+web1                       : ok=29   changed=20   unreachable=0    failed=0    skipped=2    rescued=0    ignored=0   
+
