@@ -1,0 +1,15 @@
+---
+# Connexion SSH
+ansible_user: liora
+ansible_ssh_private_key_file: ~/.ansible/key.pem
+
+# Base de données partagée entre les deux rôles
+db_name: prestashop
+db_user: prestashop
+db_password: "{{ vault_db_password }}"
+db_host: "{{ hostvars[groups['db'][0]]['ansible_host'] }}"
+db_port: 3306
+
+# Administrateur de la boutique
+prestashop_admin_email: admin@liora.fr
+prestashop_admin_password: "{{ vault_prestashop_admin_password }}"

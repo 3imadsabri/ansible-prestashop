@@ -1,0 +1,10 @@
+---
+- name: Redémarrer Apache
+  ansible.builtin.service:
+    name: apache2
+    state: restarted
+
+- name: Recharger Apache
+  ansible.builtin.service:
+    name: apache2
+    state: reloaded

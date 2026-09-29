@@ -1,0 +1,5 @@
+---
+# Secrets du projet. À chiffrer avant tout usage réel :
+#   ansible-vault encrypt group_vars/all/vault.yml
+vault_db_password: "Ch4ngeMe_Db!2026"
+vault_prestashop_admin_password: "Ch4ngeMe_Admin!2026"

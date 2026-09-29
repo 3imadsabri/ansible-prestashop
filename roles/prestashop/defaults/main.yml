@@ -1,0 +1,47 @@
+---
+# Version de PrestaShop (archive officielle publiée sur GitHub)
+prestashop_version: "8.2.3"
+prestashop_download_url: "https://github.com/PrestaShop/PrestaShop/releases/download/{{ prestashop_version }}/prestashop_{{ prestashop_version }}.zip"
+prestashop_download_dir: /opt/prestashop-release
+prestashop_root: /var/www/prestashop
+prestashop_admin_dir: admin-liora
+prestashop_install_marker: "{{ prestashop_root }}/.ansible-install-done"
+prestashop_hide_secrets: true   # masque la commande d'installation (elle contient les mots de passe)
+
+# PrestaShop 8.2 exige PHP 7.2.5 à 8.1 : on installe PHP 8.1 (PPA ondrej/php sur Ubuntu 24.04)
+prestashop_php_version: "8.1"
+prestashop_php_ppa: "ppa:ondrej/php"
+prestashop_php_extensions:
+  - mysql
+  - curl
+  - gd
+  - intl
+  - mbstring
+  - xml
+  - zip
+  - bcmath
+  - opcache
+prestashop_php_ini:
+  memory_limit: 512M
+  upload_max_filesize: 32M
+  post_max_size: 32M
+  max_execution_time: "300"
+  allow_url_fopen: "On"
+
+# Boutique
+prestashop_domain: "{{ public_ip | default('') }}"   # vide = détection automatique
+prestashop_shop_name: Liora Shop
+prestashop_language: fr
+prestashop_country: fr
+prestashop_timezone: Europe/Paris
+prestashop_admin_firstname: Admin
+prestashop_admin_lastname: Liora
+prestashop_install_demo_data: 1
+prestashop_db_prefix: ps_
+
+# Connexion à la base (valeurs partagées dans group_vars/all)
+prestashop_db_host: "{{ db_host }}"
+prestashop_db_port: "{{ db_port | default(3306) }}"
+prestashop_db_name: "{{ db_name }}"
+prestashop_db_user: "{{ db_user }}"
+prestashop_db_password: "{{ db_password }}"

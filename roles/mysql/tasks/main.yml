@@ -1,0 +1,69 @@
+---
+- name: Installer MySQL et le connecteur Python
+  ansible.builtin.apt:
+    name: "{{ mysql_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Démarrer et activer MySQL
+  ansible.builtin.service:
+    name: "{{ mysql_service_name }}"
+    state: started
+    enabled: true
+
+- name: Écouter sur toutes les interfaces
+  ansible.builtin.lineinfile:
+    path: "{{ mysql_config_file }}"
+    regexp: '^\s*bind-address\s*='
+    line: "bind-address = {{ mysql_bind_address }}"
+    insertafter: '^\[mysqld\]'
+  notify: Redémarrer MySQL
+
+- name: Définir le port d'écoute
+  ansible.builtin.lineinfile:
+    path: "{{ mysql_config_file }}"
+    regexp: '^\s*port\s*='
+    line: "port = {{ mysql_port }}"
+    insertafter: '^\[mysqld\]'
+  notify: Redémarrer MySQL
+
+- name: Appliquer la configuration réseau maintenant
+  ansible.builtin.meta: flush_handlers
+
+- name: Attendre que MySQL écoute
+  ansible.builtin.wait_for:
+    port: "{{ mysql_port }}"
+    timeout: 60
+
+- name: Supprimer la base de test
+  community.mysql.mysql_db:
+    name: test
+    state: absent
+    login_unix_socket: "{{ mysql_socket }}"
+
+- name: Supprimer les utilisateurs anonymes
+  community.mysql.mysql_user:
+    name: ""
+    host_all: true
+    state: absent
+    login_unix_socket: "{{ mysql_socket }}"
+
+- name: Créer la base de données de la boutique
+  community.mysql.mysql_db:
+    name: "{{ mysql_db_name }}"
+    encoding: "{{ mysql_db_encoding }}"
+    collation: "{{ mysql_db_collation }}"
+    state: present
+    login_unix_socket: "{{ mysql_socket }}"
+
+- name: Créer l'utilisateur applicatif pour chaque serveur web
+  community.mysql.mysql_user:
+    name: "{{ mysql_app_user }}"
+    password: "{{ mysql_app_password }}"
+    host: "{{ item }}"
+    priv: "{{ mysql_db_name }}.*:ALL"
+    state: present
+    login_unix_socket: "{{ mysql_socket }}"
+  loop: "{{ mysql_allowed_hosts + ['localhost'] }}"
+  no_log: true

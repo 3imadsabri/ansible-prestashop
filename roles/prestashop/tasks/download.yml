@@ -1,0 +1,43 @@
+---
+- name: Créer le dossier de téléchargement
+  ansible.builtin.file:
+    path: "{{ prestashop_download_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Vérifier si l'archive est déjà présente
+  ansible.builtin.stat:
+    path: "{{ prestashop_download_dir }}/prestashop_{{ prestashop_version }}.zip"
+  register: prestashop_archive
+
+- name: Télécharger l'archive PrestaShop {{ prestashop_version }}
+  ansible.builtin.get_url:
+    url: "{{ prestashop_download_url }}"
+    dest: "{{ prestashop_download_dir }}/prestashop_{{ prestashop_version }}.zip"
+    mode: "0644"
+    timeout: 300
+  when: not prestashop_archive.stat.exists
+
+- name: Extraire l'archive de distribution
+  ansible.builtin.unarchive:
+    src: "{{ prestashop_download_dir }}/prestashop_{{ prestashop_version }}.zip"
+    dest: "{{ prestashop_download_dir }}"
+    remote_src: true
+    creates: "{{ prestashop_download_dir }}/prestashop.zip"
+
+- name: Créer la racine web
+  ansible.builtin.file:
+    path: "{{ prestashop_root }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: "0755"
+
+- name: Extraire PrestaShop dans la racine web
+  ansible.builtin.unarchive:
+    src: "{{ prestashop_download_dir }}/prestashop.zip"
+    dest: "{{ prestashop_root }}"
+    remote_src: true
+    owner: www-data
+    group: www-data
+    creates: "{{ prestashop_root }}/index.php"

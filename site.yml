@@ -1,0 +1,12 @@
+---
+- name: Déployer la base de données MySQL
+  hosts: db
+  become: true
+  roles:
+    - mysql
+
+- name: Déployer la boutique PrestaShop
+  hosts: web
+  become: true
+  roles:
+    - prestashop

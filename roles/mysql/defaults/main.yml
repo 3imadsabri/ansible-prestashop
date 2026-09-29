@@ -1,0 +1,18 @@
+---
+mysql_packages:
+  - mysql-server
+  - python3-pymysql
+mysql_service_name: mysql
+mysql_socket: /var/run/mysqld/mysqld.sock
+mysql_config_file: /etc/mysql/mysql.conf.d/mysqld.cnf
+mysql_bind_address: "0.0.0.0"
+mysql_port: "{{ db_port | default(3306) }}"
+
+mysql_db_name: "{{ db_name }}"
+mysql_db_encoding: utf8mb4
+mysql_db_collation: utf8mb4_general_ci
+mysql_app_user: "{{ db_user }}"
+mysql_app_password: "{{ db_password }}"
+
+# Hôtes autorisés à se connecter : les IP des serveurs web de l'inventaire
+mysql_allowed_hosts: "{{ groups['web'] | default([]) | map('extract', hostvars, 'ansible_host') | list }}"

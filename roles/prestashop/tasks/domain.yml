@@ -1,0 +1,32 @@
+---
+- name: Récupérer un jeton de métadonnées EC2 (IMDSv2)
+  ansible.builtin.uri:
+    url: http://169.254.169.254/latest/api/token
+    method: PUT
+    headers:
+      X-aws-ec2-metadata-token-ttl-seconds: "60"
+    return_content: true
+    timeout: 3
+  register: prestashop_ec2_token
+  failed_when: false
+  when: prestashop_domain | length == 0
+
+- name: Lire l'IP publique EC2
+  ansible.builtin.uri:
+    url: http://169.254.169.254/latest/meta-data/public-ipv4
+    headers:
+      X-aws-ec2-metadata-token: "{{ prestashop_ec2_token.content }}"
+    return_content: true
+    timeout: 3
+  register: prestashop_ec2_public_ip
+  failed_when: false
+  when:
+    - prestashop_domain | length == 0
+    - prestashop_ec2_token.status | default(0) == 200
+
+- name: Fixer le domaine de la boutique
+  ansible.builtin.set_fact:
+    prestashop_shop_domain: >-
+      {{ prestashop_domain if prestashop_domain | length > 0
+         else (prestashop_ec2_public_ip.content | trim if prestashop_ec2_public_ip.status | default(0) == 200
+         else ansible_host) }}

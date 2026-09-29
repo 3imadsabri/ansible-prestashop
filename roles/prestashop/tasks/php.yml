@@ -1,0 +1,33 @@
+---
+- name: Installer les prérequis système
+  ansible.builtin.apt:
+    name:
+      - software-properties-common
+      - unzip
+      - mysql-client
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Ajouter le dépôt PHP quand la version n'est pas fournie par la distribution
+  ansible.builtin.apt_repository:
+    repo: "{{ prestashop_php_ppa }}"
+    state: present
+    update_cache: true
+  when:
+    - ansible_distribution == "Ubuntu"
+    - ansible_distribution_version is version('22.04', '>')
+
+- name: Installer PHP et ses extensions
+  ansible.builtin.apt:
+    name: "{{ ['php' ~ prestashop_php_version, 'php' ~ prestashop_php_version ~ '-cli', 'libapache2-mod-php' ~ prestashop_php_version]
+             + (prestashop_php_extensions | map('regex_replace', '^', 'php' ~ prestashop_php_version ~ '-') | list) }}"
+    state: present
+
+- name: Régler php.ini pour PrestaShop
+  ansible.builtin.lineinfile:
+    path: "/etc/php/{{ prestashop_php_version }}/apache2/php.ini"
+    regexp: '^;?\s*{{ item.key }}\s*='
+    line: "{{ item.key }} = {{ item.value }}"
+  loop: "{{ prestashop_php_ini | dict2items }}"
+  notify: Redémarrer Apache

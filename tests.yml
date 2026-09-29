@@ -1,0 +1,121 @@
+---
+# Tests de validation du déploiement :
+#   ansible-playbook tests.yml
+- name: Tests du serveur de base de données
+  hosts: db
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Collecter l'état des services
+      ansible.builtin.service_facts:
+
+    - name: Vérifier que MySQL tourne
+      ansible.builtin.assert:
+        that: ansible_facts.services['mysql.service'].state == 'running'
+        success_msg: "OK - le service MySQL est actif"
+        fail_msg: "KO - le service MySQL n'est pas actif"
+
+    - name: Vérifier que MySQL écoute sur le port {{ db_port }}
+      ansible.builtin.wait_for:
+        port: "{{ db_port }}"
+        timeout: 10
+
+    - name: Compter les tables de la base {{ db_name }}
+      ansible.builtin.command: >-
+        mysql -N -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='{{ db_name }}'"
+      register: db_tables
+      changed_when: false
+
+    - name: Vérifier que la base contient les tables PrestaShop
+      ansible.builtin.assert:
+        that: db_tables.stdout | int > 100
+        success_msg: "OK - {{ db_tables.stdout }} tables dans la base {{ db_name }}"
+        fail_msg: "KO - seulement {{ db_tables.stdout }} tables dans la base {{ db_name }}"
+
+- name: Tests du serveur web
+  hosts: web
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Collecter l'état des services
+      ansible.builtin.service_facts:
+
+    - name: Vérifier qu'Apache tourne
+      ansible.builtin.assert:
+        that: ansible_facts.services['apache2.service'].state == 'running'
+        success_msg: "OK - le service Apache est actif"
+        fail_msg: "KO - le service Apache n'est pas actif"
+
+    - name: Vérifier la version de PHP utilisée
+      ansible.builtin.command: php -r 'echo PHP_VERSION;'
+      register: php_cli_version
+      changed_when: false
+
+    - name: Afficher la version de PHP
+      ansible.builtin.debug:
+        msg: "PHP {{ php_cli_version.stdout }}"
+
+    - name: Tester la connexion du serveur web vers MySQL
+      ansible.builtin.command:
+        argv:
+          - mysql
+          - "-h{{ db_host }}"
+          - "-P{{ db_port }}"
+          - "-u{{ db_user }}"
+          - "-p{{ db_password }}"
+          - "-N"
+          - "-e"
+          - "SELECT COUNT(*) FROM {{ db_name }}.ps_product; SELECT value FROM {{ db_name }}.ps_configuration WHERE name='PS_SHOP_DOMAIN' LIMIT 1"
+      register: web_to_db
+      changed_when: false
+      no_log: true
+
+    - name: Vérifier que le catalogue de démonstration est présent
+      ansible.builtin.assert:
+        that: web_to_db.stdout_lines[0] | int > 0
+        success_msg: "OK - {{ web_to_db.stdout_lines[0] }} produits dans le catalogue"
+        fail_msg: "KO - aucun produit dans le catalogue"
+
+    - name: Retenir le domaine configuré dans la boutique
+      ansible.builtin.set_fact:
+        shop_domain: "{{ web_to_db.stdout_lines[1] }}"
+
+    - name: Afficher le résultat de la connexion web -> MySQL
+      ansible.builtin.debug:
+        msg:
+          - "OK - le serveur web lit la base : {{ web_to_db.stdout_lines[0] }} produits dans ps_product"
+          - "Domaine de la boutique : {{ shop_domain }}"
+
+    - name: Tester la page d'accueil de la boutique
+      ansible.builtin.uri:
+        url: "http://127.0.0.1/"
+        headers:
+          Host: "{{ shop_domain }}"
+        follow_redirects: none
+        return_content: true
+        status_code: 200
+      register: home_page
+
+    - name: Vérifier le contenu de la page d'accueil
+      ansible.builtin.assert:
+        that: "'prestashop' in home_page.content | lower"
+        success_msg: "OK - la page d'accueil répond (HTTP {{ home_page.status }})"
+        fail_msg: "KO - la page d'accueil ne ressemble pas à une boutique PrestaShop"
+
+- name: Test depuis la machine de contrôle Ansible
+  hosts: web
+  gather_facts: false
+  tasks:
+    - name: Tester la boutique depuis le master (port 80)
+      ansible.builtin.uri:
+        url: "http://{{ ansible_host }}/"
+        headers:
+          Host: "{{ shop_domain }}"
+        follow_redirects: none
+        status_code: 200
+      delegate_to: localhost
+      register: from_master
+
+    - name: Résultat
+      ansible.builtin.debug:
+        msg: "OK - boutique accessible depuis le master via {{ ansible_host }}:80 (HTTP {{ from_master.status }})"

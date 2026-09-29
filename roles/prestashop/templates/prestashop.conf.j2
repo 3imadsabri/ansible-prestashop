@@ -1,0 +1,13 @@
+<VirtualHost *:80>
+    ServerName {{ prestashop_shop_domain }}
+    DocumentRoot {{ prestashop_root }}
+
+    <Directory {{ prestashop_root }}>
+        Options FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    ErrorLog ${APACHE_LOG_DIR}/prestashop_error.log
+    CustomLog ${APACHE_LOG_DIR}/prestashop_access.log combined
+</VirtualHost>

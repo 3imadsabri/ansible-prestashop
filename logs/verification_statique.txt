@@ -1,0 +1,14 @@
+=== Vérifications statiques - 2026-09-29 12:46:17 ===
+
+$ ansible --version
+ansible [core 2.18.19]
+
+$ ansible-playbook --syntax-check site.yml tests.yml
+
+playbook: site.yml
+
+playbook: tests.yml
+
+$ ansible-lint site.yml tests.yml roles/
+
+Passed: 0 failure(s), 0 warning(s) in 18 files processed of 19 encountered. Last profile that met the validation criteria was 'production'.

@@ -1,0 +1,76 @@
+---
+- name: Vérifier si la boutique est déjà installée
+  ansible.builtin.stat:
+    path: "{{ prestashop_install_marker }}"
+  register: prestashop_installed
+
+- name: Attendre que la base de données soit joignable
+  ansible.builtin.wait_for:
+    host: "{{ prestashop_db_host }}"
+    port: "{{ prestashop_db_port }}"
+    timeout: 120
+  when: not prestashop_installed.stat.exists
+
+- name: Lancer l'installateur PrestaShop en ligne de commande
+  ansible.builtin.command:
+    argv:
+      - "/usr/bin/php{{ prestashop_php_version }}"
+      - index_cli.php
+      - "--domain={{ prestashop_shop_domain }}"
+      - "--db_server={{ prestashop_db_host }}:{{ prestashop_db_port }}"
+      - "--db_name={{ prestashop_db_name }}"
+      - "--db_user={{ prestashop_db_user }}"
+      - "--db_password={{ prestashop_db_password }}"
+      - "--db_create=0"
+      - "--prefix={{ prestashop_db_prefix }}"
+      - "--name={{ prestashop_shop_name }}"
+      - "--language={{ prestashop_language }}"
+      - "--country={{ prestashop_country }}"
+      - "--timezone={{ prestashop_timezone }}"
+      - "--firstname={{ prestashop_admin_firstname }}"
+      - "--lastname={{ prestashop_admin_lastname }}"
+      - "--email={{ prestashop_admin_email }}"
+      - "--password={{ prestashop_admin_password }}"
+      - "--fixtures={{ prestashop_install_demo_data }}"
+      - "--ssl=0"
+    chdir: "{{ prestashop_root }}/install"
+    creates: "{{ prestashop_install_marker }}"
+  no_log: "{{ prestashop_hide_secrets }}"
+  register: prestashop_install_result
+
+- name: Marquer l'installation comme terminée
+  ansible.builtin.copy:
+    content: "PrestaShop {{ prestashop_version }} installé par Ansible\n"
+    dest: "{{ prestashop_install_marker }}"
+    mode: "0644"
+  when: not prestashop_installed.stat.exists
+
+- name: Afficher la fin du journal d'installation
+  ansible.builtin.debug:
+    msg: "{{ prestashop_install_result.stdout_lines[-5:] }}"
+  when: not prestashop_installed.stat.exists
+
+- name: Rendre les fichiers à www-data
+  ansible.builtin.file:
+    path: "{{ prestashop_root }}"
+    owner: www-data
+    group: www-data
+    recurse: true
+
+- name: Supprimer le dossier d'installation
+  ansible.builtin.file:
+    path: "{{ prestashop_root }}/install"
+    state: absent
+
+- name: Renommer le dossier d'administration
+  ansible.builtin.command: "mv {{ prestashop_root }}/admin {{ prestashop_root }}/{{ prestashop_admin_dir }}"
+  args:
+    removes: "{{ prestashop_root }}/admin"
+    creates: "{{ prestashop_root }}/{{ prestashop_admin_dir }}"
+
+- name: Afficher les accès à la boutique
+  ansible.builtin.debug:
+    msg:
+      - "Boutique : http://{{ prestashop_shop_domain }}/"
+      - "Back-office : http://{{ prestashop_shop_domain }}/{{ prestashop_admin_dir }}/"
+      - "Base de données : {{ prestashop_db_host }}:{{ prestashop_db_port }}/{{ prestashop_db_name }}"
